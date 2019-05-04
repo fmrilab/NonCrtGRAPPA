@@ -90,7 +90,7 @@ end
 [calibPara, extra] = attrParser(calibPara, extra);
 
 f = {'Tik','calibSize','doSift','doExtend'};
-calibPara = chkfield(calibPara, f); % completing missing fields with []
+calibPara = chkattrs(calibPara, f); % completing missing fields with []
 
 %%% k2imgPara pairing
 [k2imgPara.kPS2PS_fn, k2imgPara.PS2P_fn] = deal([]);
@@ -103,7 +103,7 @@ if isempty(k2imgPara.PS2P_fn)
 end
 
 f = {'kPS2PS_fn','PS2P_fn'};
-k2imgPara = chkfield(k2imgPara, f);
+k2imgPara = chkattrs(k2imgPara, f);
 
 %%% add into gMDL
 gMDL.calibPara = calibPara;
@@ -178,7 +178,7 @@ f = {'sysEqPara','pDist','doGrid','imSize','pSize','pMask'...
   ,'calibPara','k2imgPara','patch_c','coeff_c'};
 % 'Properties' field may appear when doSave
 f_ignore = {'sMask', 'sTraj', 'Properties'}; % not to be completed
-gMDL = chkfield(gMDL, f, f_ignore);
+gMDL = chkattrs(gMDL, f, f_ignore);
 end
 
 %% sub-function that does the sMask calib

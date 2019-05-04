@@ -38,7 +38,7 @@ sysEqPara.dcf = dcf;
 sysEqPara.imMask = imMask;
 
 f = {'F', 'dcf', 'imMask'}; % output should contain this fields
-sysEqPara = chkfield(sysEqPara, f);
+sysEqPara = chkattrs(sysEqPara, f);
 end
 
 function test()

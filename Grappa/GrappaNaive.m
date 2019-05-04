@@ -9,7 +9,7 @@ function [P, PS, kPSo, argo] = GrappaNaive(kPSi, gMDL, varargin)
 %%
 argo = struct;
 [argo, ~, argoXtra] = attrParser(argo, varargin); % for future usage
-argo = mrgfield(argoXtra, argo);
+argo = mrgattrs(argoXtra, argo);
 %% Prep
 patch_c = gMDL.patch_c;
 npatch = size(patch_c,1);

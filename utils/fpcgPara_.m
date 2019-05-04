@@ -11,5 +11,5 @@ fpcgPara.W = 1;
 fpcgPara = attrParser(fpcgPara, varargin);
 
 f = {'x0','tol','niter','niterXtra','lam','Reg','W'};
-fpcgPara = chkfield(fpcgPara, f);
+fpcgPara = chkattrs(fpcgPara, f);
 end
