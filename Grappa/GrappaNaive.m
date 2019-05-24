@@ -16,23 +16,6 @@ npatch = size(patch_c,1);
 
 %% form raw k-data vector, unify dimension into (nk, nc, nf)
 if isattr(gMDL,'sMask')
-  if 0
-    kMask_d = any(any(kPSi(:,:,:,:,1), 4), 5); % _d: data; 4 nc, 5 nf
-    % The following if-else is useful for compare rec quality across ACS
-    % size, it allows gMDL.sMask to change while keeps kMask_d the same
-    if ~isequal(kMask_d, kMask) %%% sMask MIS-MATCH %%%
-      warning('data sMask mismatches calib sMask');
-      [patch_cd] = getPatch(kMask_d, gMDL.pSize, gMDL.pDist, 'grid');
-      [type, type_d] = deal(cat(patch_c{:,1},1), cat(patch_cd{:,1},1));
-      
-      [~, ind, ind_d] = intersect(type, type_d, 'rows', 'stable');
-      patch_cd = patch_cd(ind_d); % reorder patch_cd to match calibed order
-      
-      % replace calib patch w/ reordered data patch, and coeff_c correspondinly
-      [gMDL.coeff_c, patch_c] = deal(gMDL.coeff_c(ind), patch_cd);
-    end
-  end
-  
   kMask = ~~gMDL.sMask;
   if isequal(size(kPSi(:,:,:,1)), size(gMDL.sMask))
     kPSi = reshape(kPSi, [], size(kPSi,4), size(kPSi,5));
@@ -43,6 +26,9 @@ elseif isattr(gMDL,'sTraj')
   kMask = ~~gMDL.sTraj(:,1);
   nkDim = numel(kMask);
   kPSi = squeeze(kPSi); % ensure kPSi is (nk, nc, nf)
+  if gMDL.doGrid
+    assert(nnz(kMask)==size(kPSi,1), 'For doGrid: input only sampled data');
+  end
 else,   error('unsupported');
 end
 

@@ -7,7 +7,7 @@ function grappaTestScript()
 %     .kPS  (nx, ny, nz, nc), kspace Phantom w/ SMaps (indexed by nc(oil))
 %     .PS   (nx, ny, nz, nc), Phantom w/ SMaps
 %     .sMap (nx, ny, nz, nc), sensitivity maps
-%   sprA (struct):
+%   readout_info (struct):
 %     .k (nk, nl) cycle/FOV/imSize, complex, normalized spiral trajectory
 %     .imSize (2,), matrix size
 %   mA (struct):
@@ -20,102 +20,77 @@ function grappaTestScript()
 %% tests
 % uncomment lines to run specific tests
 
-testsos();
-testsos2crt();
+phmA = matfile('phantom_dat.mat');
+[PS, kPS] = getattrs(phmA, {'PS', 'kPS'});
+kcalib = kPS(91:110, 91:110, :,:); % ACS, center of k-space
 
+spiral1_radial0 = 0;
+if spiral1_radial0, readout_info = matfile('kSpiral2D.mat');
+else,               readout_info = matfile('kRadial2D.mat');
 end
 
-%%
-function testsos()
+[fov, imSize, k, dcf] = getattrs(readout_info, {'fov','imSize','k','w'});
+kTraj = bsxfun(@times, imSize, [real(k(:)), imag(k(:))]);
 
-phmA = load('phantom_dat.mat');
-kcalib = phmA.kPS(86:115, 86:115, :,:);
+kmask = zeros(size(k));
+kmask(:,1:2:end) = 1;  % config under-sampling
 
-% kSpiral2D is spiral-out readout
-sprA = load('kSpiral2D.mat');
-pSize  = [7,7];
-
-fkspace = 200*[real(sprA.k(:)), imag(sprA.k(:))];
-kmask = zeros(size(sprA.k));
-
-
-kmask(1:75,:) = 1; % densely sampled the center
-kmask(:,1:2:end) = 1;
-
-sTraj = [kmask(:), fkspace];
-
-imSize = sprA.imSize;
-Tik = 5e-7;
-
-% synthesize simu data
+[fsTraj, usTraj] = deal([ones(numel(kmask),1), kTraj], [kmask(:), kTraj]);
 imMask = true(imSize);
-Asyn = Gmri(fkspace, imMask);
+sysEqPara = sysEqPara_(fsTraj, imMask, dcf);
 
-PS = phmA.PS;
-kPS = Asyn*reshape(PS, [], size(PS,4));
+%% synthesize a toy dataset
+Asyn = Gmri(kTraj, imMask);
+fkPS = Asyn*reshape(PS, [], size(PS,4));
+ukPS = bsxfun(@times, kmask(:)~=0, fkPS);
 
-ukPS = bsxfun(@times, kmask(:)~=0, kPS);
+pSize = [7, 7]; % do play with this, :)
 
-% sysEqPara_() will calc the dcf
-sysEqPara = sysEqPara_([ones(size(kmask(:))), fkspace], true(imSize));
+fP_direct = sosCombine(reshape(Asyn'*bsxfun(@times, dcf(:), fkPS), size(PS)));
+uP_direct = test_direct(ukPS, usTraj, kcalib, pSize, imSize, sysEqPara);
 
-kPS2PS_fn = [];
+fP_dogrid = sosCombine(PS);
+uP_dogrid = test_dogrid(ukPS, usTraj, kcalib, pSize, imSize);
 
-PS2P_fn = [];
-% PS2P_fn = @(PS)sMapCombine(PS, phmA.sMap);
+%% plots
+figure,
+subplot(221), imagesc(fP_direct); title('fP\_direct');
+subplot(222), imagesc(uP_direct); title('uP\_direct');
 
-doSift = true;
-gMDL = grappaPrep(sTraj,kcalib,pSize,imSize, 'doSift',doSift...
-  , 'sysEqPara',sysEqPara, 'kPS2PS_fn',kPS2PS_fn, 'PS2P_fn',PS2P_fn, 'Tik', Tik);
+subplot(223), imagesc(fP_dogrid); title('fP\_dogrid');
+subplot(224), imagesc(uP_dogrid); title('uP\_dogrid');
 
-[uP, PS, kPSG, arg] = GrappaNaive(ukPS, gMDL);
-
-figure, im(uP);
-
+%%
 % keyboard
 end
+
 %%
-function testsos2crt()
-phmA = load('phantom_dat.mat');
-kcalib = phmA.kPS(91:110, 91:110, :,:);
+function [uP] = test_direct(ukPS, usTraj, kcalib, pSize, imSize, sysEqPara)
+% Directly reconstruct under-sampled k-space
+%OUTPUTs:
+% - uP (nx, ny, nz), combined final image
+% - PS (nx, ny, nz, nc), reconstructed coil images
+% - kPSG, reconstructed k-space
 
-% kSpiral2D is spiral-out readout
-sprA = load('kSpiral2D.mat');
-pSize  = [7,7];
+gMDL = grappaPrep(usTraj, kcalib, pSize, imSize, 'sysEqPara',sysEqPara);
+[uP, PS, kPSG, ~] = GrappaNaive(ukPS, gMDL);
 
-[xx, yy] = ndgrid(-99:100, -99:100);
+end
 
-maskCtr = sqrt(xx.^2 + yy.^2) <= 10; % densely sampled the center
-kTrajCtr = [xx(maskCtr), yy(maskCtr)];
+%%
+function [uP] = test_dogrid(ukPS, usTraj, kcalib, pSize, imSize)
+% Directly reconstruct under-sampled k-space
+%OUTPUTs:
+% - uP (nx, ny, nz), combined final image
+% - PS (nx, ny, nz, nc), reconstructed coil images
+% - kPSG, reconstructed k-space
 
-R = 2;
-kTrajtmp = 200*sprA.k(55:end, 1:R:end); % remove spiral Ctr, and downsample
-kTrajXtr = [real(kTrajtmp(:)), imag(kTrajtmp(:))];
+sampled = usTraj(:,1) ~= 0;
+usTraj = usTraj(sampled, :);
+ukPS   = ukPS(sampled,:);
 
-m_fn = @(x)ones(size(x,1),1);
+gMDL = grappaPrep(usTraj, kcalib, pSize, imSize, 'doGrid',true);
+[uP, PS, kPSG, ~] = GrappaNaive(ukPS, gMDL);
 
-kTraj = [      kTrajCtr;          kTrajXtr];
-kmask = [m_fn(kTrajCtr); -1*m_fn(kTrajXtr)];
-
-sTraj = [kmask, kTraj];
-
-imSize = sprA.imSize;
-Tik = 5e-7;
-
-% synthesize simu data
-kTrajSyn = [kTrajCtr; kTrajXtr];
-imMask = true(imSize);
-Asyn = Gmri(kTrajSyn, imMask);
-
-fPS = phmA.PS;
-ukPSi = Asyn*reshape(fPS, [], size(fPS,4));
-
-gMDL = grappaPrep(sTraj, kcalib, pSize, imSize, 'Tik', Tik, 'doGrid',true);
-
-fP = sosCombine(phmA.PS); % raw (not synth) as ground truth
-
-[uP, ~, ukPSo, arg] = GrappaNaive(ukPSi, gMDL); % bingo
-
-figure, im(uP);
 end
 

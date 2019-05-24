@@ -61,23 +61,23 @@ end
 [opt.doSave, opt.doFFTTrick] = deal(false, true); % true fftTrick for circ bndry
 [opt, extra] = attrParser(opt, extra);
 
+gMDL.pMask = normBallMask(pSize, gMDL.pDist);
+
+if isattr(gMDL, 'sTraj') && gMDL.doGrid
+  assert(all(gMDL.sTraj(:,1)), 'For doGrid: input only sampled locations')
+  crtMask = imdilate(mloc2mask(gMDL.sTraj, imSize), gMDL.pMask);
+  sTraj0 = mask2mloc(crtMask); % add in grid locations into sTraj
+  gMDL.sTraj = [gMDL.sTraj; [zeros(nnz(crtMask),1), sTraj0(crtMask, 2:end)]];
+end
+
 if isempty(gMDL.sysEqPara)
   kfull = sMask_sTraj;
-  if isattr(gMDL, 'sMask'), kfull = true(size(kfull));
+  if isattr(gMDL, 'sMask') || gMDL.doGrid, kfull = true(imSize);
   else, kfull(:,1) = 1;
   end
   gMDL.sysEqPara = sysEqPara_(kfull,true(imSize));
 end
 [gMDL.imSize, gMDL.pSize] = deal(imSize, pSize);
-
-gMDL.pMask = normBallMask(pSize, gMDL.pDist);
-
-if isattr(gMDL, 'sTraj') && gMDL.doGrid
-  % NOTICE: this assumes fed-in sTraj are fully sampled
-  crtMask = imdilate(mloc2mask(gMDL.sTraj, imSize), gMDL.pMask);
-  sTraj0 = mask2mloc(crtMask); % add in grid locations into sTraj
-  gMDL.sTraj = [gMDL.sTraj; [zeros(nnz(crtMask),1), sTraj0(crtMask, 2:end)]];
-end
 
 %%% calibPara pairing
 calibSize = size(kcalib); % [sx, sy, sz, nc]
@@ -374,10 +374,10 @@ for ii = 1:nComb % huge FFT is too slow in parfor
   chc_i = calibh(:,:,:,coilSub(ii,1)).*calib(:,:,:,coilSub(ii,2));
   % trick: replacing 0-field is faster than proper 0-padding
   calib0(s_c{:}) = chc_i;
-  % One may be remove the circshift below, then query w/ modded locs, while it
-  % may shorten the time of this for-loop, the moding operation may aggravate 
-  % the cost of the enormous query operations; Also, the modded query only works
-  % for interpolation methods that strictly do not involve out-of-bndry values.
+  % One may replace the circshift below by querying w/ modded locs, while it may
+  % shorten the time of this for-loop, the moding operation may aggravate the
+  % cost of the enormous query operations; Also, the modded query only works for
+  % interpolation methods that strictly do not involve out-of-bndry values.
   
   F_c{ii} = circshift(fft3(calib0), kshift);
 end
