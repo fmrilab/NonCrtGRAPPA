@@ -20,7 +20,7 @@ eprint = {https://onlinelibrary.wiley.com/doi/pdf/10.1002/mrm.27801}
 ## General comments
 
 `setup_NonCrtGRAPPA.m` does configurations.\
-Demos are provided in `./GRAPPA/test/grappaTestScript.m`
+Demos are provided in `./demo`.
 
 ``` md
 # Parameter naming
@@ -31,6 +31,9 @@ kPS:  Fourier transform of PS, channel-wise;
 ukPS: Under-sampled kPS, zero-filled;
 fkPS: Full kPS, either fully sampled or reconstructed.
 ```
+
+This repo has included binary test data files for basic accessibility in certain regions.\
+Future binary data files will be available on <https://drive.google.com/drive/folders/1FxF5jcMhL8Z2IzB-i__mb4Q3wDOmi20R>.
 
 ## Dependencies
 

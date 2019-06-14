@@ -2,6 +2,7 @@ function mask = mloc2mask(mloc, dims)
 % discretize mloc by round(), i.e. nearest ngb, embed the result into a mask
 [m, loc] = deal(mloc(:,1), mloc(:,2:end));
 if ~exist('dims','var'), dims = round(max(loc,[],1))-round(min(loc,[],1))+1; end
+dims = dims(1:(size(mloc,2)-1));
 loc= loc(~~m,:);
 
 cSub = ctrSub(dims);
