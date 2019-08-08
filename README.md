@@ -38,3 +38,9 @@ Future binary data files will be available on <https://drive.google.com/drive/fo
 ## Dependencies
 
 - MIRT, <http://web.eecs.umich.edu/~fessler/irt/fessler.tgz>.
+
+## Compatible MATLAB versions  
+For MATLAB < R2018a, if LAPACK library is not correctly linked when building LS_fft_mex.c, one would need an additional flag 'lmwlapack' as: 
+
+mex LS_fft_mex.c -lmwlapack
+
