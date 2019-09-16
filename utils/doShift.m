@@ -34,17 +34,7 @@ if isinteger(shifts) || isequal(shifts(:), int8(shifts(:)))
   % res = cell2mat(res_c);
   res = cat(Nd+1, res_c{:});
 else
-  fx = fftn(x);
-  
-  [~, phs] = phs4Shift(shifts, 'dims',size(x)); % exponential phs by dflt
-  
-  fx = bsxfun(@times, fx, phs);
-  res = zeros(size(fx), class(x));
-  
-  colon_c = repmat({':'}, [1,Nd]);
-  for ii = 1:size(fx, Nd+1)
-    res(colon_c{:},ii) = ifftn(fx(colon_c{:}, ii));
-  end
+  error('Unsupported non-integer shifts, please open a GitHub issue if needed');
 end
 
 end
