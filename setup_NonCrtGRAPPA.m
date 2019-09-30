@@ -5,7 +5,7 @@ if ~exist('doSavePath','var'), doSavePath = false; end
 theDir = fileparts(mfilename('fullpath'));
 prevDir = cd(theDir);
 % mex setup
-cd('./GRAPPA/private');
+cd('./Grappa/private');
 if isempty(which('LS_fft_mex'))
   mex -largeArrayDims -lmwlapack LS_fft_mex.c
 end
