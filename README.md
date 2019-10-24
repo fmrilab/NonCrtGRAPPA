@@ -4,6 +4,8 @@ Reference implementation of:\
 [A GRAPPA algorithm for arbitrary 2D/3D non-Cartesian sampling trajectories with rapid calibration](https://onlinelibrary.wiley.com/doi/full/10.1002/mrm.27801)\
 doi: [10.1002/mrm.27801](https://doi.org/10.1002/mrm.27801)
 
+Accecible [here](http://web.eecs.umich.edu/~fessler/papers/lists/files/jour/19/web/luo-19-aga.pdf).
+
 cite as:
 
 ```bib
@@ -37,10 +39,12 @@ Future binary data files will be available on <https://drive.google.com/drive/fo
 
 ## Dependencies
 
-- MIRT, <http://web.eecs.umich.edu/~fessler/irt/fessler.tgz>.
+- MIRT: Github [link](https://github.com/JeffFessler/mirt), Package [link](http://web.eecs.umich.edu/~fessler/irt/fessler.tgz).
 
 ## Compatible MATLAB versions  
 For MATLAB < R2018a, if LAPACK library is not correctly linked when building LS_fft_mex.c, one would need an additional flag 'lmwlapack' as: 
 
-mex LS_fft_mex.c -lmwlapack
+```matlab
+>> mex LS_fft_mex.c -lmwlapack
+```
 
